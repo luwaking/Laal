@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Laam Wallet — P2P (Frontend-only)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{
+  --primary:#4a00e0; --primary-2:#6a3df0; --accent:#00c6ff;
+  --bg:#0f1724; --card: rgba(255,255,255,0.04); --muted:#98a0b3; --white:#eef2ff;
+  --success:#00b894; --danger:#e84393;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,Segoe UI,system-ui,Arial; background: linear-gradient(135deg,#0c1220,#081026); color:var(--white); -webkit-font-smoothing:antialiased;}
+.container{max-width:1200px;margin:22px auto;padding:18px;}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand h1{margin:0;font-size:1.4rem;background:linear-gradient(90deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.controls{display:flex;gap:8px;align-items:center}
+.btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--white)}
+.btn-primary{background:linear-gradient(90deg,var(--primary),var(--primary-2));color:white}
+.btn-small{padding:8px 10px;font-size:0.9rem;border-radius:8px}
+.grid{display:grid;grid-template-columns:1fr 420px;gap:18px;align-items:start}
+.card{background:var(--card);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,0.03)}
+.p2p-header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.tabs{display:flex;gap:6px;background:rgba(255,255,255,0.03);padding:6px;border-radius:10px}
+.tab{padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;color:var(--muted)}
+.tab.active{background:linear-gradient(90deg,var(--primary),var(--primary-2));color:white}
+.search{display:flex;gap:8px;margin-bottom:12px}
+.search input{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--white)}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.select, .input {padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--white)}
+.offer-list{display:flex;flex-direction:column;gap:10px;max-height:580px;overflow:auto;padding-right:6px}
+.offer{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent)}
+.offer .left{display:flex;gap:12px;align-items:center}
+.avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;background:var(--primary)}
+.offer .meta{font-size:0.92rem}
+.badge{padding:6px 8px;border-radius:8px;font-weight:700}
+.badge.buy{background:rgba(0,184,148,0.12);color:var(--success)}
+.badge.sell{background:rgba(232,67,147,0.08);color:var(--danger)}
+.small{font-size:0.85rem;color:var(--muted)}
+.right{text-align:right}
+.action-area{display:flex;gap:8px;align-items:center}
+.side-panel .section{margin-bottom:14px}
+.chat-window{display:flex;flex-direction:column;height:520px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
+.chat-header{padding:12px;background:rgba(255,255,255,0.02);display:flex;justify-content:space-between;align-items:center}
+.chat-messages{flex:1;padding:12px;display:flex;flex-direction:column;gap:8px;overflow:auto;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
+.msg{max-width:78%;padding:10px;border-radius:12px}
+.msg.me{align-self:flex-end;background:linear-gradient(90deg,var(--primary),var(--primary-2));color:white}
+.msg.them{align-self:flex-start;background:rgba(255,255,255,0.03)}
+.chat-input{display:flex;padding:10px;background:rgba(255,255,255,0.02);gap:8px;border-top:1px solid rgba(255,255,255,0.02)}
+.chat-input input{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--white)}
+.small-muted{font-size:0.8rem;color:var(--muted)}
+.offer-controls{display:flex;gap:8px;align-items:center;margin-top:8px}
+.status-pill{padding:6px 8px;border-radius:8px;font-weight:700}
+.status-open{background:rgba(0,184,148,0.08);color:var(--success)}
+.status-closed{background:rgba(232,67,147,0.06);color:var(--danger)}
+.empty{padding:20px;text-align:center;color:var(--muted);border-radius:8px}
+.form-row{display:flex;gap:8px}
+.form-row > *{flex:1}
+.small-input{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--white)}
+.footer-note{font-size:0.82rem;color:var(--muted);margin-top:8px}
+@media(max-width:1000px){.grid{grid-template-columns:1fr;}.side-panel{order:2}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="brand">
+      <i class="fas fa-wallet" style="font-size:28px;color:var(--primary)"></i>
+      <h1>Laam Wallet — P2P (Frontend-only)</h1>
+      <div class="small-muted" style="margin-left:12px">Local-only demo — real-time via BroadcastChannel</div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-ghost btn-small" id="btn-new-offer"><i class="fas fa-plus"></i> New Offer</button>
+      <button class="btn btn-ghost btn-small" id="btn-open-p2p"><i class="fas fa-exchange-alt"></i> Open P2P Modal</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="p2p-header">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="tabs" id="side-tabs">
+              <div class="tab active" data-view="orderbook">Orderbook</div>
+              <div class="tab" data-view="myOffers">My Offers</div>
+              <div class="tab" data-view="history">Trade History</div>
+            </div>
+          </div>
+          <div>
+            <div class="filters">
+              <select id="filter-token" class="select">
+                <option value="all">All tokens</option>
+                <option value="XLM">XLM</option>
+                <option value="LAAM">Laam</option>
+                <option value="USDC">USDC</option>
+                <option value="USDT">USDT</option>
+              </select>
+              <select id="filter-type" class="select">
+                <option value="all">All types</option>
+                <option value="buy">Buy</option>
+                <option value="sell">Sell</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="search">
+          <input id="searchOffers" placeholder="Search offers, trader name, etc." />
+          <div class="small-muted" style="padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)">Offers: <span id="offersCount">0</span></div>
+        </div>
+
+        <div id="orderbook-view" class="offer-list" aria-live="polite"></div>
+        <div id="myoffers-view" class="offer-list" style="display:none"></div>
+        <div id="history-view" class="offer-list" style="display:none"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3 style="margin:0 0 10px 0">Create Offer</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="create-type" class="input small-input" style="width:140px">
+            <option value="sell">Sell</option>
+            <option value="buy">Buy</option>
+          </select>
+          <select id="create-token" class="input small-input" style="width:140px">
+            <option value="XLM">XLM</option>
+            <option value="LAAM">Laam</option>
+            <option value="USDC">USDC</option>
+            <option value="USDT">USDT</option>
+          </select>
+          <input id="create-amount" class="input small-input" placeholder="Amount" />
+          <input id="create-price" class="input small-input" placeholder="Price per unit (USD)" />
+        </div>
+        <div style="margin-top:10px">
+          <input id="create-min" class="small-input" placeholder="Min amount (optional)" />
+          <input id="create-max" class="small-input" placeholder="Max amount (optional)" style="margin-left:8px" />
+        </div>
+        <div style="margin-top:10px">
+          <textarea id="create-details" rows="3" class="input" placeholder="Details / payment method (Telebirr, CBE Birr, Bank transfer...)"></textarea>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn btn-primary" id="btn-create-offer"><i class="fas fa-hand-holding-usd"></i> Create Offer</button>
+          <button class="btn btn-ghost" id="btn-clear-form">Clear</button>
+        </div>
+        <div class="footer-note">Tips: Use clear payment instructions and set min/max per your availability.</div>
+      </div>
+    </div>
+
+    <aside class="side-panel">
+      <div class="card side-panel">
+        <div class="section">
+          <h3 style="margin:0 0 8px 0">Active Trade / Chat</h3>
+          <div class="small-muted" id="activeTradeInfo">Select an offer to start chat & trade</div>
+        </div>
+
+        <div id="chatHolder" style="display:none" class="section">
+          <div class="chat-window">
+            <div class="chat-header">
+              <div>
+                <strong id="chatTraderName">—</strong>
+                <div class="small-muted" id="chatTraderMeta">—</div>
+              </div>
+              <div>
+                <span class="status-pill status-open" id="chatStatus">OPEN</span>
+              </div>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input">
+              <input id="chatInput" placeholder="Type message..." />
+              <button class="btn btn-primary" id="sendChat"><i class="fas fa-paper-plane"></i></button>
+            </div>
+            <div style="padding:8px;border-top:1px solid rgba(255,255,255,0.02);display:flex;gap:8px">
+              <button class="btn btn-ghost" id="btn-accept-offer">Accept Offer</button>
+              <button class="btn btn-ghost" id="btn-cancel-offer">Cancel Offer</button>
+              <button class="btn btn-ghost" id="btn-complete-trade">Mark Completed</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h4 style="margin:0 0 8px 0">Traders</h4>
+          <div id="tradersList" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+
+        <div class="section">
+          <h4 style="margin:0 0 8px 0">Quick actions</h4>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-small btn-ghost" id="btn-clear-all">Clear All P2P Data</button>
+            <button class="btn btn-small btn-ghost" id="btn-export">Export Data</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Modal-like simplified (not necessary to duplicate your big modal): keep inline -->
+<script>
+// ------------------ P2P Frontend-only Implementation ------------------
+
+// Utilities
+const uid = (prefix='id') => `${prefix}_${Math.random().toString(36).slice(2,9)}`;
+const nowIso = () => (new Date()).toISOString();
+const bc = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('laam-p2p') : null;
+
+function bcPost(action, payload){
+  const msg = {action, payload, ts: Date.now()};
+  if(bc) bc.postMessage(msg);
+  // also write to localStorage change-key for fallback
+  try { localStorage.setItem('laam_p2p_sync', JSON.stringify(msg)); } catch(e){}
+}
+
+// Storage helpers
+function getOffers(){ try{return JSON.parse(localStorage.getItem('laam_p2p_offers')||'[]')}catch(e){return []} }
+function setOffers(arr){ localStorage.setItem('laam_p2p_offers', JSON.stringify(arr)); bcPost('offers:update',{}); }
+function getTrades(){ try{return JSON.parse(localStorage.getItem('laam_p2p_trades')||'[]')}catch(e){return []} }
+function setTrades(arr){ localStorage.setItem('laam_p2p_trades', JSON.stringify(arr)); bcPost('trades:update',{}); }
+function getTraders(){ try{return JSON.parse(localStorage.getItem('laam_p2p_traders')||'[]')}catch(e){return []} }
+function setTraders(arr){ localStorage.setItem('laam_p2p_traders', JSON.stringify(arr)); bcPost('traders:update',{}); }
+
+// Demo default traders (if no traders in storage)
+if(!localStorage.getItem('laam_p2p_traders')){
+  const defaultTraders = [
+    {id:'tr_ahmed',name:'Ahmed Trader',rating:4.9,complete:98,avatar:'A'},
+    {id:'tr_mohamed',name:'Mohamed Exchange',rating:4.8,complete:99,avatar:'M'},
+    {id:'tr_fatima',name:'Fatima Crypto',rating:4.7,complete:97,avatar:'F'},
+  ];
+  setTraders(defaultTraders);
+}
+
+// UI references
+const orderbookEl = document.getElementById('orderbook-view');
+const myoffersEl = document.getElementById('myoffers-view');
+const historyEl = document.getElementById('history-view');
+const offersCountEl = document.getElementById('offersCount');
+const searchEl = document.getElementById('searchOffers');
+const filterToken = document.getElementById('filter-token');
+const filterType = document.getElementById('filter-type');
+const sideTabs = document.querySelectorAll('.tab[data-view]');
+const btnNewOffer = document.getElementById('btn-new-offer');
+const btnOpenP2p = document.getElementById('btn-open-p2p');
+
+const createType = document.getElementById('create-type');
+const createToken = document.getElementById('create-token');
+const createAmount = document.getElementById('create-amount');
+const createPrice = document.getElementById('create-price');
+const createMin = document.getElementById('create-min');
+const createMax = document.getElementById('create-max');
+const createDetails = document.getElementById('create-details');
+const btnCreateOffer = document.getElementById('btn-create-offer');
+const btnClearForm = document.getElementById('btn-clear-form');
+
+const tradersListEl = document.getElementById('tradersList');
+const activeTradeInfo = document.getElementById('activeTradeInfo');
+
+const chatHolder = document.getElementById('chatHolder');
+const chatTraderNameEl = document.getElementById('chatTraderName');
+const chatTraderMetaEl = document.getElementById('chatTraderMeta');
+const chatMessagesEl = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const sendChatBtn = document.getElementById('sendChat');
+const chatStatusEl = document.getElementById('chatStatus');
+
+const btnAcceptOffer = document.getElementById('btn-accept-offer');
+const btnCancelOffer = document.getElementById('btn-cancel-offer');
+const btnCompleteTrade = document.getElementById('btn-complete-trade');
+
+let currentUser = {id: 'me_local', name: 'You', avatar:'Y'}; // demo local user
+let activeTrade = null; // {id, offerId, buyerId, sellerId, status}
+let activeOffer = null; // selected offer
+
+// render traders
+function renderTraders(){
+  const traders = getTraders();
+  tradersListEl.innerHTML = '';
+  traders.forEach(t => {
+    const d = document.createElement('div');
+    d.className = 'offer';
+    d.style.padding = '8px';
+    d.innerHTML = `<div style="display:flex;gap:10px;align-items:center">
+      <div class="avatar">${t.avatar || t.name[0]}</div>
+      <div><strong>${t.name}</strong><div class="small-muted">${t.complete}% completion • ${t.rating}★</div></div>
+    </div>`;
+    d.addEventListener('click', ()=> {
+      // open a quick search for this trader's offers
+      filterToken.value='all'; filterType.value='all'; searchEl.value = t.name;
+      applyFilters();
+    });
+    tradersListEl.appendChild(d);
+  });
+}
+
+// formatting
+function fmtUSD(n){ return Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+// render offers list
+function renderOffersList(){
+  const offers = getOffers().slice().reverse(); // show newest first
+  const q = (searchEl.value||'').toLowerCase().trim();
+  const tokenF = filterToken.value;
+  const typeF = filterType.value;
+  const activeView = document.querySelector('.tab.active').dataset.view;
+
+  const filtered = offers.filter(o=>{
+    if(tokenF !== 'all' && o.token !== tokenF) return false;
+    if(typeF !== 'all' && o.type !== typeF) return false;
+    if(q){
+      const inText = (o.traderName + ' ' + o.details + ' ' + o.token).toLowerCase();
+      if(!inText.includes(q)) return false;
+    }
+    // view-specific
+    if(activeView === 'myOffers' && o.traderId !== currentUser.id) return false;
+    return true;
+  });
+
+  offersCountEl.textContent = filtered.length;
+
+  // populate target view
+  orderbookEl.innerHTML = '';
+  myoffersEl.innerHTML = '';
+  historyEl.innerHTML = '';
+
+  filtered.forEach(o=>{
+    const el = buildOfferDom(o);
+    // append to orderbook unless it's myOffers view
+    if(document.querySelector('.tab.active').dataset.view === 'orderbook') orderbookEl.appendChild(el);
+    if(DocumentOrMyOfferView(o)) myoffersEl.appendChild(el.cloneNode(true));
+    // history: include closed trades
+  });
+
+  // show empty states
+  if(orderbookEl.children.length === 0 && document.querySelector('.tab.active').dataset.view==='orderbook'){
+    orderbookEl.innerHTML = `<div class="empty">No offers found. Create an offer to get started.</div>`;
+  }
+  if(myoffersEl.children.length === 0 && document.querySelector('.tab.active').dataset.view==='myOffers'){
+    myoffersEl.innerHTML = `<div class="empty">You have no offers. Create one below.</div>`;
+  }
+
+  // show recent trades in history
+  const trades = getTrades().slice().reverse();
+  if(trades.length === 0){
+    historyEl.innerHTML = `<div class="empty">No trade sessions yet.</div>`;
+  } else {
+    historyEl.innerHTML = '';
+    trades.forEach(tr=>{
+      const off = getOffers().find(x=>x.id===tr.offerId);
+      const li = document.createElement('div');
+      li.className = 'offer';
+      li.innerHTML = `<div class="left"><div class="avatar">${off ? off.traderName[0] : 'T'}</div>
+        <div class="meta"><strong>${off ? off.traderName : 'Unknown'}</strong><div class="small-muted">${off ? off.token : '—'} • ${tr.status}</div></div></div>
+        <div class="right small-muted">${new Date(tr.createdAt).toLocaleString()}</div>`;
+      historyEl.appendChild(li);
+    });
+  }
+}
+
+function DocumentOrMyOfferView(o){
+  // helper to allow myoffers list to show items even when filter changed
+  return o.traderId === currentUser.id;
+}
+
+function buildOfferDom(o){
+  const el = document.createElement('div');
+  el.className = 'offer';
+  el.dataset.offerId = o.id;
+  el.innerHTML = `<div class="left">
+    <div class="avatar">${(o.traderName||'T')[0]}</div>
+    <div style="margin-left:8px">
+      <div class="meta"><strong>${o.traderName}</strong> <span class="small-muted">• ${o.token}</span></div>
+      <div class="small-muted">${o.details || ''}</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="small-muted">${o.type === 'buy' ? 'Buys' : 'Sells'}</div>
+    <div style="font-weight:800">${o.amount} • $${fmtUSD(o.price)}</div>
+    <div style="margin-top:6px" class="offer-controls">
+      <div class="badge ${o.type==='buy'?'buy':'sell'}">${o.type.toUpperCase()}</div>
+      <div class="small-muted">${new Date(o.createdAt).toLocaleString()}</div>
+      <div><button class="btn btn-small btn-ghost open-offer">Chat</button></div>
+    </div>
+  </div>`;
+  // click chat
+  el.querySelector('.open-offer').addEventListener('click', ()=> openOfferChat(o.id));
+  return el;
+}
+
+// open chat for an offer -> create or reuse trade session
+function openOfferChat(offerId){
+  const offers = getOffers();
+  const offer = offers.find(o=>o.id===offerId);
+  if(!offer) { alert('Offer not found'); return; }
+
+  // create trade object: determine buyer/seller
+  let trades = getTrades();
+  // if existing trade session for this offer and this user exists, reuse
+  let trade = trades.find(t=>t.offerId===offer.id && (t.buyerId===currentUser.id || t.sellerId===currentUser.id));
+  if(!trade){
+    const buyerId = (offer.type === 'sell')? currentUser.id : offer.traderId; // if offer sells, current user is buyer
+    const sellerId = (offer.type === 'sell') ? offer.traderId : currentUser.id;
+    trade = { id: uid('trade'), offerId: offer.id, buyerId, sellerId, status: 'OPEN', createdAt: nowIso() };
+    trades.push(trade);
+    setTrades(trades);
+  }
+
+  activeTrade = trade;
+  activeOffer = offer;
+  showActiveTradeUI();
+  loadChatMessages(); // load messages for this trade
+  bcPost('trade:opened', {tradeId: trade.id});
+}
+
+function showActiveTradeUI(){
+  if(!activeTrade || !activeOffer){ chatHolder.style.display='none'; activeTradeInfo.textContent = 'Select an offer to start chat & trade'; return; }
+  chatHolder.style.display='block';
+  const counterpartId = (currentUser.id === activeTrade.buyerId) ? activeTrade.sellerId : activeTrade.buyerId;
+  const traders = getTraders();
+  const counterpart = traders.find(t => t.id === counterpartId) || {name: activeOffer.traderName || 'Trader', rating:0, complete:0, avatar: activeOffer.traderName ? activeOffer.traderName[0] : 'T'};
+  chatTraderNameEl.textContent = counterpart.name;
+  chatTraderMetaEl.textContent = `${activeOffer.token} • ${activeOffer.amount} @ $${fmtUSD(activeOffer.price)} • ${activeOffer.details || ''}`;
+  chatStatusEl.textContent = activeTrade.status;
+  chatStatusEl.className = 'status-pill ' + (activeTrade.status === 'OPEN' ? 'status-open' : 'status-closed');
+  activeTradeInfo.textContent = `Active: ${activeOffer.traderName} • ${activeOffer.token} • ${activeOffer.amount} @ $${fmtUSD(activeOffer.price)}`;
+  // enable/disable action buttons per role
+  const amSeller = (currentUser.id === activeTrade.sellerId);
+  btnAcceptOffer.style.display = (activeTrade.status==='OPEN' && !amSeller) ? 'inline-block' : 'none';
+  btnCancelOffer.style.display = (activeTrade.status==='OPEN' && (amSeller || !amSeller)) ? 'inline-block' : 'none';
+  btnCompleteTrade.style.display = (activeTrade.status==='IN_PROGRESS' && amSeller) ? 'inline-block' : 'none';
+}
+
+// chat messages (localStorage per trade)
+function getChatMessages(tradeId){
+  try{ return JSON.parse(localStorage.getItem(`laam_p2p_messages:${tradeId}`) || '[]'); } catch(e){return []}
+}
+function setChatMessages(tradeId, msgs){ localStorage.setItem(`laam_p2p_messages:${tradeId}`, JSON.stringify(msgs)); bcPost('chat:update',{tradeId}); }
+
+function loadChatMessages(){
+  if(!activeTrade) return;
+  const msgs = getChatMessages(activeTrade.id);
+  chatMessagesEl.innerHTML = '';
+  msgs.forEach(m=>{
+    const div = document.createElement('div');
+    div.className = 'msg ' + (m.senderId === currentUser.id ? 'me' : 'them');
+    div.innerHTML = `<div>${m.text}</div><div class="small-muted" style="margin-top:6px">${new Date(m.ts).toLocaleTimeString()}</div>`;
+    chatMessagesEl.appendChild(div);
+  });
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+}
+
+function sendChatMessage(text){
+  if(!activeTrade) return;
+  const msgs = getChatMessages(activeTrade.id);
+  const m = { id: uid('m'), tradeId: activeTrade.id, senderId: currentUser.id, text, ts: Date.now() };
+  msgs.push(m);
+  setChatMessages(activeTrade.id, msgs);
+  loadChatMessages();
+}
+
+// accept offer (buyer accepts)
+btnAcceptOffer.addEventListener('click', ()=>{
+  if(!activeTrade) return;
+  // only buyer can accept: if current user is buyer
+  if(currentUser.id !== activeTrade.buyerId){
+    alert('Only the buyer can accept this offer.');
+    return;
+  }
+  activeTrade.status = 'IN_PROGRESS';
+  const trades = getTrades().map(t=> t.id === activeTrade.id ? activeTrade : t);
+  setTrades(trades);
+  showActiveTradeUI();
+  bcPost('trade:accepted',{tradeId: activeTrade.id});
+});
+
+// cancel offer/trade
+btnCancelOffer.addEventListener('click', ()=>{
+  if(!activeTrade) return;
+  if(!confirm('Cancel this trade?')) return;
+  activeTrade.status = 'CANCELLED';
+  const trades = getTrades().map(t=> t.id === activeTrade.id ? activeTrade : t);
+  setTrades(trades);
+  showActiveTradeUI();
+  bcPost('trade:cancelled',{tradeId: activeTrade.id});
+});
+
+// complete trade (seller marks complete)
+btnCompleteTrade.addEventListener('click', ()=>{
+  if(!activeTrade) return;
+  if(currentUser.id !== activeTrade.sellerId){ alert('Only seller can mark complete'); return; }
+  activeTrade.status = 'COMPLETED';
+  const trades = getTrades().map(t=> t.id === activeTrade.id ? activeTrade : t);
+  setTrades(trades);
+  // update offer status to closed
+  const offers = getOffers().map(o => o.id === activeOffer.id ? {...o, status:'closed'} : o);
+  setOffers(offers);
+  showActiveTradeUI();
+  renderOffersList();
+  bcPost('trade:completed',{tradeId: activeTrade.id});
+});
+
+// send chat
+sendChatBtn.addEventListener('click', ()=> {
+  const text = chatInput.value.trim();
+  if(!text) return;
+  sendChatMessage(text);
+  chatInput.value = '';
+});
+// react to broadcast messages (real-time across tabs)
+if(bc){
+  bc.onmessage = (ev) => {
+    const {action, payload} = ev.data || {};
+    // simple updates
+    if(action === 'offers:update' || action==='trades:update' || action==='traders:update' || action==='chat:update'){
+      // small delay to ensure storage updated
+      setTimeout(()=>{ renderTraders(); renderOffersList(); if(activeTrade) loadChatMessages(); }, 120);
+    }
+    if(action === 'trade:accepted' || action==='trade:cancelled' || action==='trade:completed'){
+      setTimeout(()=>{ renderOffersList(); if(activeTrade) { activeTrade = getTrades().find(t=>t.id===payload.tradeId) || activeTrade; showActiveTradeUI(); } },120);
+    }
+  };
+}
+
+// listen for localStorage fallback events (when BroadcastChannel not available)
+window.addEventListener('storage', (e) => {
+  if(e.key && e.key.startsWith('laam_p2p')) {
+    setTimeout(()=>{ renderTraders(); renderOffersList(); if(activeTrade) loadChatMessages(); }, 120);
+  }
+});
+
+// create offer
+btnCreateOffer.addEventListener('click', ()=>{
+  const amt = Number(createAmount.value);
+  const price = Number(createPrice.value);
+  if(!amt || !price) return alert('Enter amount and price.');
+  const o = {
+    id: uid('offer'),
+    traderId: currentUser.id,
+    traderName: currentUser.name,
+    type: createType.value,
+    token: createToken.value,
+    amount: amt,
+    price: price,
+    min: createMin.value || null,
+    max: createMax.value || null,
+    details: createDetails.value || '',
+    createdAt: nowIso(),
+    status: 'open'
+  };
+  const arr = getOffers(); arr.push(o); setOffers(arr);
+  // clear
+  createAmount.value=''; createPrice.value=''; createDetails.value=''; createMin.value=''; createMax.value='';
+  bcPost('offer:created', {offerId: o.id});
+  renderOffersList();
+  alert('Offer created!');
+});
+
+// clear form
+btnClearForm.addEventListener('click', ()=>{
+  createAmount.value=''; createPrice.value=''; createDetails.value=''; createMin.value=''; createMax.value='';
+});
+
+// tabs switching
+sideTabs.forEach(t => t.addEventListener('click', ()=>{
+  sideTabs.forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const view = t.dataset.view;
+  document.getElementById('orderbook-view').style.display = (view==='orderbook') ? 'block' : 'none';
+  document.getElementById('myoffers-view').style.display = (view==='myOffers') ? 'block' : 'none';
+  document.getElementById('history-view').style.display = (view==='history') ? 'block' : 'none';
+  renderOffersList();
+}));
+
+// search & filters
+[searchEl, filterToken, filterType].forEach(inp => inp.addEventListener('input', ()=> renderOffersList()));
+
+// initial render
+renderTraders();
+renderOffersList();
+
+// helper to open modal (for convience)
+btnOpenP2p.addEventListener('click', ()=> {
+  alert('The P2P panel is the main UI on this page. Click an offer "Chat" button to open a trade session.');
+});
+
+// quick new-offer button opens focus on amount
+btnNewOffer.addEventListener('click', ()=> {
+  window.scrollTo({top: document.body.scrollHeight, behavior:'smooth'});
+  createAmount.focus();
+});
+
+// active offer chat UI toggles
+function openOfferDirect(offerId){
+  openOfferChat(offerId);
+}
+
+// export / clear
+document.getElementById('btn-clear-all').addEventListener('click', ()=>{
+  if(!confirm('Clear ALL P2P data (offers, trades, messages)? This cannot be undone.')) return;
+  localStorage.removeItem('laam_p2p_offers');
+  localStorage.removeItem('laam_p2p_trades');
+  // remove chat keys
+  Object.keys(localStorage).forEach(k => { if(k.startsWith('laam_p2p_messages:')) localStorage.removeItem(k); });
+  bcPost('data:cleared', {});
+  renderOffersList(); renderTraders();
+  alert('Cleared.');
+});
+
+document.getElementById('btn-export').addEventListener('click', ()=>{
+  const data = {
+    offers: getOffers(),
+    trades: getTrades(),
+    traders: getTraders()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'laam-p2p-export.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// accept incoming sync via localStorage 'laam_p2p_sync' item changes (fallback)
+window.addEventListener('storage', (e) => {
+  if(e.key === 'laam_p2p_sync'){
+    try{
+      const msg = JSON.parse(e.newValue);
+      // simple re-render
+      setTimeout(()=> { renderOffersList(); renderTraders(); if(activeTrade) loadChatMessages(); }, 80);
+    }catch(e){}
+  }
+});
+
+// listen for chat updates via storage event broadcast as well
+window.addEventListener('storage', (e) => {
+  if(e.key && e.key.startsWith('laam_p2p_messages:')){
+    const tid = e.key.split(':')[1];
+    if(activeTrade && activeTrade.id === tid) loadChatMessages();
+  }
+});
+
+// Initialize some demo offers (if none)
+if(!localStorage.getItem('laam_p2p_offers')){
+  const demoOffers = [
+    { id: uid('offer'), traderId:'tr_ahmed', traderName:'Ahmed Trader', type:'sell', token:'XLM', amount:200, price:0.41, details:'Telebirr / Bank transfer', createdAt: nowIso(), status:'open' },
+    { id: uid('offer'), traderId:'tr_mohamed', traderName:'Mohamed Exchange', type:'buy', token:'LAAM', amount:5000, price:0.055, details:'CBE Birr preferred', createdAt: nowIso(), status:'open' },
+    { id: uid('offer'), traderId:'tr_fatima', traderName:'Fatima Crypto', type:'sell', token:'USDC', amount:150, price:1.00, details:'Account transfer only', createdAt: nowIso(), status:'open' },
+  ];
+  setOffers(demoOffers);
+  renderOffersList();
+}
+
+// load any pre-existing chat if a trade is present and user reloaded
+function checkActiveTradeFromUrl(){
+  // option: check hash for trade id, e.g. #trade=trade_abc
+  const h = location.hash;
+  if(h && h.startsWith('#trade=')){
+    const tid = h.split('=')[1];
+    const t = getTrades().find(x=>x.id===tid);
+    const tr = t ? getOffers().find(o=>o.id===t.offerId) : null;
+    if(t && tr){ activeTrade = t; activeOffer = tr; showActiveTradeUI(); loadChatMessages(); }
+  }
+}
+checkActiveTradeFromUrl();
+
+// when a chat or offer update happens via broadcast, reload UI
+if(bc){
+  bc.onmessage = (ev) => {
+    const {action, payload} = ev.data || {};
+    setTimeout(()=>{ renderOffersList(); renderTraders(); if(activeTrade) loadChatMessages(); }, 80);
+  };
+}
+// small helper: click an offer element to open chat (delegation)
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.open-offer');
+  if(btn){
+    const item = btn.closest('.offer');
+    if(item && item.dataset.offerId) openOfferChat(item.dataset.offerId);
+  }
+});
+
+// optional: allow user to "become" a trader (change currentUser name)
+const namePrompt = () => {
+  const nm = prompt('Set your display name (will be used for offers and chat):', currentUser.name);
+  if(nm && nm.trim()){
+    currentUser.name = nm.trim();
+    // ensure current user exists in traders list
+    const traders = getTraders();
+    let me = traders.find(t=>t.id === currentUser.id);
+    if(!me){
+      traders.push({id: currentUser.id, name: currentUser.name, rating:5.0, complete:0, avatar: currentUser.name[0]});
+    } else {
+      me.name = currentUser.name; me.avatar = currentUser.name[0];
+    }
+    setTraders(traders);
+    renderTraders();
+  }
+};
+document.querySelector('.brand h1').addEventListener('click', namePrompt);
+
+// allow clicking trader items to focus their offers
+tradersListEl.addEventListener('click', (ev)=>{
+  const el = ev.target.closest('.offer');
+  if(!el) return;
+});
+
+// create basic keyboard send
+chatInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); sendChatBtn.click(); }
+});
+
+// auto update UI periodically (in case some storage changes happened)
+setInterval(()=>{ renderOffersList(); renderTraders(); if(activeTrade) loadChatMessages(); }, 2000);
+
+</script>
+</body>
+</html>
